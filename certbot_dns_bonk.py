@@ -94,7 +94,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                 'zone': zone['name'],
                 'name': validation_name,
                 'type': 'TXT',
-                'value': [validation],
+                'value': ['"{0}"'.format(validation)],
                 'permissions': {
                     'write': [self.credentials.conf('group')],
                 },
