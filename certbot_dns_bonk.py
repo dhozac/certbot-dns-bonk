@@ -58,7 +58,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                 'username': 'Username for bonk API',
                 'password': 'Password for bonk API',
                 'group': 'Group to set as a writer',
-                'enable_cleanup': 'Should cleanup be enabled?',
+                'cleanup_action': 'Whether to delete the record or the value',
             }
         )
 
@@ -107,19 +107,34 @@ class Authenticator(dns_common.DNSAuthenticator):
 
         # The record does exist, patch it
         elif response.status_code == 200:
-            record = {
-                'value': [validation],
+            record = response.json()
+            patch = {
+                'value': record['value'] + ['"{0}"'.format(validation)],
             }
-            response = session.patch(url, json=record)
+            response = session.patch(url, json=patch)
             if response.status_code != 200:
                 logger.error("Unable to update record %s: %d %s", url, response.status_code, response.text)
                 raise errors.PluginError('Unable to update record')
 
     def _cleanup(self, domain, validation_name, validation):
-        if self.credentials.conf('enable_cleanup') != 'true':
-            return
+        session = requests.Session()
+        session.auth=(self.credentials.conf('username'), self.credentials.conf('password'))
         url = "{0}/record/{1}/TXT/".format(self.credentials.conf('endpoint'), validation_name)
-        response = requests.delete(url, auth=(self.credentials.conf('username'), self.credentials.conf('password')))
-        if response.status_code not in (204, 404):
-            logger.error("Unable to delete record %s: %d %s", url, response.status_code, response.text)
-            raise errors.PluginError('Unable to delete record')
+        if self.credentials.conf('cleanup_action') == 'record':
+            response = session.delete(url)
+            if response.status_code not in (204, 404):
+                logger.error("Unable to delete record %s: %d %s", url, response.status_code, response.text)
+                raise errors.PluginError('Unable to delete record')
+        elif self.credentials.conf('cleanup_action') == 'value':
+            response = session.get(url)
+            if response.status_code != 200:
+                logger.error("Unable to get record to delete value %s: %d %s", url, response.status_code, response.text)
+                raise errors.PluginError('Unable to delete value')
+            record = response.json()
+            patch = {'value': [v for v in record['value'] if v != '"{0}"'.format(validation)]}
+            if patch['value'] == []:
+                patch['value'] = ['""']
+            response = session.patch(url, json=patch)
+            if response.status_code != 200:
+                logger.error("Unable to delete value %s: %d %s", url, response.status_code, response.text)
+                raise errors.PluginError('Unable to delete value')

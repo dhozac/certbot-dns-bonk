@@ -16,12 +16,12 @@ requests using the dns-01 challenge.
    certbot_dns_bonk:dns_bonk_username=USERNAME
    certbot_dns_bonk:dns_bonk_password=PASSWORD
    certbot_dns_bonk:dns_bonk_group=GROUP
-   certbot_dns_bonk:dns_bonk_enable_cleanup=true
+   certbot_dns_bonk:dns_bonk_cleanup_action=record
    ```
 
-   If enable_cleanup is true, records will be deleted after each run. If your
+   If cleanup_action is record, records will be deleted after each run. If your
    user lacks permission to create records on its own in the zones, set this to
-   false instead.
+   value instead, which will only delete the values it has added.
 
    Make sure this file is only readable by the user running certbot, typically
    root.
