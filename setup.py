@@ -8,7 +8,7 @@ with open("README.md", "r") as f:
 
 setup(
     name='certbot-dns-bonk',
-    version='0.2.0',
+    version='0.2.1',
     author="Daniel Hokka Zakrisson",
     author_email="daniel@hozac.com",
     description="Certbot plugin for authentication using bonk",
