@@ -95,6 +95,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                 'name': validation_name,
                 'type': 'TXT',
                 'value': ['"{0}"'.format(validation)],
+                'ttl': 60,
                 'permissions': {
                     'write': [self.credentials.conf('group')],
                 },
@@ -109,7 +110,7 @@ class Authenticator(dns_common.DNSAuthenticator):
         elif response.status_code == 200:
             record = response.json()
             patch = {
-                'value': record['value'] + ['"{0}"'.format(validation)],
+                'value': [v for v in record['value'] if v != '""'] + ['"{0}"'.format(validation)],
             }
             response = session.patch(url, json=patch)
             if response.status_code != 200:
